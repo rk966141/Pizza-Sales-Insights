@@ -33,10 +33,6 @@ Join relevant tables to find the category-wise distribution of pizzas.
 Group the orders by date and calculate the average number of pizzas ordered per day.
 Determine the top 3 most ordered pizza types based on revenue.
 
-Advanced:
-Calculate the percentage contribution of each pizza type to total revenue.
-Analyze the cumulative revenue generated over time.
-Determine the top 3 most ordered pizza types based on revenue for each pizza category.
 
 */
 
@@ -153,83 +149,4 @@ join pizzas on pizzas.pizza_id = order_details.pizza_id
 join pizza_types on pizza_types.pizza_type_id = pizzas.pizza_type_id
 group by pizza_types.name
 order by [Revenue from pizza] desc
-
--- try doing it using window functions also
-
-
-/*
-Advanced:
-Calculate the percentage contribution of each pizza type to total revenue.
-Analyze the cumulative revenue generated over time.
-Determine the top 3 most ordered pizza types based on revenue for each pizza category.
-*/
-
-
--- Calculate the percentage contribution of each pizza type to total revenues
-
-
-select pizza_types.category, 
-concat(cast((sum(order_details.quantity*pizzas.price) /
-(select sum(order_details.quantity*pizzas.price) 
-from order_details 
-join pizzas on pizzas.pizza_id = order_details.pizza_id 
-))*100 as decimal(10,2)), '%')
-as 'Revenue contribution from pizza'
-from order_details 
-join pizzas on pizzas.pizza_id = order_details.pizza_id
-join pizza_types on pizza_types.pizza_type_id = pizzas.pizza_type_id
-group by pizza_types.category
--- order by [Revenue from pizza] desc
-
--- revenue contribution from each pizza by pizza name
-select pizza_types.name, 
-concat(cast((sum(order_details.quantity*pizzas.price) /
-(select sum(order_details.quantity*pizzas.price) 
-from order_details 
-join pizzas on pizzas.pizza_id = order_details.pizza_id 
-))*100 as decimal(10,2)), '%')
-as 'Revenue contribution from pizza'
-from order_details 
-join pizzas on pizzas.pizza_id = order_details.pizza_id
-join pizza_types on pizza_types.pizza_type_id = pizzas.pizza_type_id
-group by pizza_types.name
-order by [Revenue contribution from pizza] desc
-
-
--- Analyze the cumulative revenue generated over time.
--- use of aggregate window function (to get the cumulative sum)
-with cte as (
-select date as 'Date', cast(sum(quantity*price) as decimal(10,2)) as Revenue
-from order_details 
-join orders on order_details.order_id = orders.order_id
-join pizzas on pizzas.pizza_id = order_details.pizza_id
-group by date
--- order by [Revenue] desc
-)
-select Date, Revenue, sum(Revenue) over (order by date) as 'Cumulative Sum'
-from cte 
-group by date, Revenue
-
-
--- Determine the top 3 most ordered pizza types based on revenue for each pizza category.
-
-with cte as (
-select category, name, cast(sum(quantity*price) as decimal(10,2)) as Revenue
-from order_details 
-join pizzas on pizzas.pizza_id = order_details.pizza_id
-join pizza_types on pizza_types.pizza_type_id = pizzas.pizza_type_id
-group by category, name
--- order by category, name, Revenue desc
-)
-, cte1 as (
-select category, name, Revenue,
-rank() over (partition by category order by Revenue desc) as rnk
-from cte 
-)
-select category, name, Revenue
-from cte1 
-where rnk in (1,2,3)
-order by category, name, Revenue
-
-
 
