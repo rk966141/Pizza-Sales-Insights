@@ -9,11 +9,12 @@ use pizza_project
 
 -- let's  import the csv files
 -- Now understand each table (all columns)
+	
 select * from order_details;  -- order_details_id	order_id	pizza_id	quantity
 
-select * from pizzas -- pizza_id, pizza_type_id, size, price
+select * from pizzas; -- pizza_id, pizza_type_id, size, price
 
-select * from orders  -- order_id, date, time
+select * from orders;  -- order_id, date, time
 
 select * from pizza_types;  -- pizza_type_id, name, category, ingredients
 
